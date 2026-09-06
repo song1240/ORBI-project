@@ -1,10 +1,11 @@
-# [Project name]
+# Model Pilot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A local-first AI resource meter and model advisor for coding agents.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/model-pilot run dev` — run the Model Pilot dashboard through its managed workflow
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -22,15 +23,21 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/model-pilot/` — React dashboard with Live, Sessions, and Settings screens
+- `artifacts/api-server/src/model-pilot/` — local analysis, prediction, recommendation, and provider logic
+- `artifacts/api-server/src/routes/pilot.ts` — Model Pilot API routes
+- `lib/api-spec/openapi.yaml` — API contract and generated client source of truth
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Actual values and estimates are separate API objects and UI regions.
+- Task analysis, prediction, and recommendation remain server-side and provider-independent.
+- The first runnable build uses a simulated provider with evolving context and cost.
+- Automatic model switching remains out of scope; recommendations are advisory.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Model Pilot displays the current model, context pressure, session cost, task complexity, token/cost prediction bands, recommendation, recent activity, session history, and local privacy settings.
 
 ## User preferences
 
@@ -38,7 +45,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Prediction confidence values are whole percentages (for example `72`), not decimal fractions.
+- Workflow-provided `PORT` and `BASE_PATH` are required to run the Vite app.
 
 ## Pointers
 

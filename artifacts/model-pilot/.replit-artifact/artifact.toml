@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Model Pilot"
+description = "A local-first AI resource meter and model advisor for coding agents. Monitor live context, cost, task complexity, predictions, and recommendations from one focused dashboard."
+version = "1.0.0"
+id = "artifacts/model-pilot"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22822
+
+[services.development]
+run = "pnpm --filter @workspace/model-pilot run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/model-pilot", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/model-pilot/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22822"
+BASE_PATH = "/"

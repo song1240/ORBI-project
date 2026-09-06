@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: pilot
+    description: Model Pilot dashboard operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /pilot/live:
+    get:
+      operationId: getPilotLive
+      tags: [pilot]
+      summary: Get the current coding session
+      responses:
+        "200":
+          description: Current Model Pilot snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveSnapshot"
+  /pilot/sessions:
+    get:
+      operationId: listPilotSessions
+      tags: [pilot]
+      summary: List recent coding sessions
+      responses:
+        "200":
+          description: Recent session history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionHistoryItem"
+  /pilot/settings:
+    get:
+      operationId: getPilotSettings
+      tags: [pilot]
+      summary: Get Model Pilot settings
+      responses:
+        "200":
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PilotSettings"
+    patch:
+      operationId: updatePilotSettings
+      tags: [pilot]
+      summary: Update Model Pilot settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PilotSettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PilotSettings"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +90,180 @@ components:
           type: string
       required:
         - status
+    LiveSnapshot:
+      type: object
+      required:
+        - connection
+        - provider
+        - project
+        - branch
+        - model
+        - modelTier
+        - contextUsed
+        - contextLimit
+        - sessionCost
+        - task
+        - taskType
+        - complexityScore
+        - complexityLevel
+        - expectedFiles
+        - expectedToolCalls
+        - reasoningLevel
+        - contextRisk
+        - tokenEstimate
+        - costEstimate
+        - recommendation
+        - recentActivity
+        - updatedAt
+      properties:
+        connection:
+          type: string
+        provider:
+          type: string
+        project:
+          type: string
+        repository:
+          type: string
+        branch:
+          type: string
+        modifiedFiles:
+          type: integer
+        model:
+          type: string
+        modelTier:
+          type: string
+        contextUsed:
+          type: integer
+        contextLimit:
+          type: integer
+        sessionCost:
+          type: number
+        task:
+          type: string
+        taskType:
+          type: string
+        complexityScore:
+          type: integer
+        complexityLevel:
+          type: string
+        expectedFiles:
+          type: integer
+        expectedToolCalls:
+          type: integer
+        reasoningLevel:
+          type: string
+        contextRisk:
+          type: string
+        tokenEstimate:
+          $ref: "#/components/schemas/EstimateRange"
+        costEstimate:
+          $ref: "#/components/schemas/EstimateRange"
+        recommendation:
+          $ref: "#/components/schemas/Recommendation"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+        updatedAt:
+          type: string
+          format: date-time
+    EstimateRange:
+      type: object
+      required: [min, max, confidence]
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+        confidence:
+          type: integer
+    Recommendation:
+      type: object
+      required: [action, title, reason, currentFit, recommendedFit]
+      properties:
+        action:
+          type: string
+        title:
+          type: string
+        reason:
+          type: string
+        currentFit:
+          type: integer
+        recommendedFit:
+          type: integer
+        recommendedModel:
+          type: ["string", "null"]
+    ActivityItem:
+      type: object
+      required: [id, label, detail, timestamp, kind]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        detail:
+          type: string
+        timestamp:
+          type: string
+        kind:
+          type: string
+    SessionHistoryItem:
+      type: object
+      required: [id, date, project, task, model, actualTokens, predictedTokens, cost, complexity, recommendation]
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        project:
+          type: string
+        task:
+          type: string
+        model:
+          type: string
+        actualTokens:
+          type: integer
+        predictedTokens:
+          $ref: "#/components/schemas/EstimateRange"
+        cost:
+          type: number
+        complexity:
+          type: integer
+        recommendation:
+          type: string
+    PilotSettings:
+      type: object
+      required: [provider, port, contextWarning, contextCritical, switchThreshold, telemetry, mockMode]
+      properties:
+        provider:
+          type: string
+        port:
+          type: integer
+        contextWarning:
+          type: integer
+        contextCritical:
+          type: integer
+        switchThreshold:
+          type: integer
+        telemetry:
+          type: boolean
+        mockMode:
+          type: boolean
+    PilotSettingsUpdate:
+      type: object
+      properties:
+        provider:
+          type: string
+        port:
+          type: integer
+        contextWarning:
+          type: integer
+        contextCritical:
+          type: integer
+        switchThreshold:
+          type: integer
+        telemetry:
+          type: boolean
+        mockMode:
+          type: boolean
 
