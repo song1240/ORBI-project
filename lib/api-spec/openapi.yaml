@@ -111,6 +111,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PilotSettings"
+  /pilot/storage:
+    get:
+      operationId: getPilotStorage
+      tags: [pilot]
+      summary: Get local Model Pilot storage details
+      responses:
+        "200":
+          description: Active local database location and storage summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PilotStorageSummary"
+  /pilot/history/export:
+    get:
+      operationId: exportPilotHistory
+      tags: [pilot]
+      summary: Export local session history as portable JSON
+      responses:
+        "200":
+          description: Portable local session history export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PilotHistoryExport"
+  /pilot/history:
+    delete:
+      operationId: clearPilotHistory
+      tags: [pilot]
+      summary: Clear local session history while preserving settings
+      responses:
+        "200":
+          description: History cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PilotHistoryClearResult"
 components:
   schemas:
     HealthStatus:
@@ -369,4 +405,46 @@ components:
     PilotProviderPreference:
       type: string
       enum: [claude-code, codex, gemini, anthropic, openai, ollama, local]
+    PilotStorageSummary:
+      type: object
+      required: [databasePath, databaseBytes, sessionCount, projectCount, settingsPreservedOnClear, localOnly]
+      properties:
+        databasePath:
+          type: string
+        databaseBytes:
+          type: integer
+        sessionCount:
+          type: integer
+        projectCount:
+          type: integer
+        settingsPreservedOnClear:
+          type: boolean
+        localOnly:
+          type: boolean
+    PilotHistoryExport:
+      type: object
+      required: [format, version, exportedAt, databasePath, sessions]
+      properties:
+        format:
+          type: string
+          enum: [model-pilot-history]
+        version:
+          type: integer
+        exportedAt:
+          type: string
+          format: date-time
+        databasePath:
+          type: string
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionHistoryItem"
+    PilotHistoryClearResult:
+      type: object
+      required: [clearedSessions, settingsPreserved]
+      properties:
+        clearedSessions:
+          type: integer
+        settingsPreserved:
+          type: boolean
 

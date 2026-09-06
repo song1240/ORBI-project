@@ -24,9 +24,12 @@ import type {
   ClaudeCodeEventAccepted,
   HealthStatus,
   LiveSnapshot,
+  PilotHistoryClearResult,
+  PilotHistoryExport,
   PilotProviderDiscovery,
   PilotSettings,
   PilotSettingsUpdate,
+  PilotStorageSummary,
   SessionHistoryItem
 } from './api.schemas';
 
@@ -583,5 +586,230 @@ export const useUpdatePilotSettings = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdatePilotSettingsMutationOptions(options));
+    }
+
+export const getGetPilotStorageUrl = () => {
+
+
+
+
+  return `/api/pilot/storage`
+}
+
+/**
+ * @summary Get local Model Pilot storage details
+ */
+export const getPilotStorage = async ( options?: Parameters<typeof customFetch>[1]): Promise<PilotStorageSummary> => {
+
+  return customFetch<PilotStorageSummary>(getGetPilotStorageUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPilotStorageQueryKey = () => {
+    return [
+    `/api/pilot/storage`
+    ] as const;
+    }
+
+
+export const getGetPilotStorageQueryOptions = <TData = Awaited<ReturnType<typeof getPilotStorage>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPilotStorage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPilotStorageQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPilotStorage>>> = ({ signal }) => getPilotStorage({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPilotStorage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPilotStorageQueryResult = NonNullable<Awaited<ReturnType<typeof getPilotStorage>>>
+export type GetPilotStorageQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get local Model Pilot storage details
+ */
+
+export function useGetPilotStorage<TData = Awaited<ReturnType<typeof getPilotStorage>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPilotStorage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPilotStorageQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportPilotHistoryUrl = () => {
+
+
+
+
+  return `/api/pilot/history/export`
+}
+
+/**
+ * @summary Export local session history as portable JSON
+ */
+export const exportPilotHistory = async ( options?: Parameters<typeof customFetch>[1]): Promise<PilotHistoryExport> => {
+
+  return customFetch<PilotHistoryExport>(getExportPilotHistoryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportPilotHistoryQueryKey = () => {
+    return [
+    `/api/pilot/history/export`
+    ] as const;
+    }
+
+
+export const getExportPilotHistoryQueryOptions = <TData = Awaited<ReturnType<typeof exportPilotHistory>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportPilotHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportPilotHistoryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportPilotHistory>>> = ({ signal }) => exportPilotHistory({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportPilotHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportPilotHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof exportPilotHistory>>>
+export type ExportPilotHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Export local session history as portable JSON
+ */
+
+export function useExportPilotHistory<TData = Awaited<ReturnType<typeof exportPilotHistory>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportPilotHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportPilotHistoryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getClearPilotHistoryUrl = () => {
+
+
+
+
+  return `/api/pilot/history`
+}
+
+/**
+ * @summary Clear local session history while preserving settings
+ */
+export const clearPilotHistory = async ( options?: Parameters<typeof customFetch>[1]): Promise<PilotHistoryClearResult> => {
+
+  return customFetch<PilotHistoryClearResult>(getClearPilotHistoryUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getClearPilotHistoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearPilotHistory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearPilotHistory>>, TError,void, TContext> => {
+
+const mutationKey = ['clearPilotHistory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearPilotHistory>>, void> = () => {
+
+
+          return  clearPilotHistory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearPilotHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof clearPilotHistory>>>
+
+    export type ClearPilotHistoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Clear local session history while preserving settings
+ */
+export const useClearPilotHistory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearPilotHistory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof clearPilotHistory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getClearPilotHistoryMutationOptions(options));
     }
 

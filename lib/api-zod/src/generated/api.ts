@@ -166,3 +166,53 @@ export const UpdatePilotSettingsResponse = zod.object({
 })
 
 
+/**
+ * @summary Get local Model Pilot storage details
+ */
+export const GetPilotStorageResponse = zod.object({
+  "databasePath": zod.string(),
+  "databaseBytes": zod.number().int(),
+  "sessionCount": zod.number().int(),
+  "projectCount": zod.number().int(),
+  "settingsPreservedOnClear": zod.boolean(),
+  "localOnly": zod.boolean()
+})
+
+
+/**
+ * @summary Export local session history as portable JSON
+ */
+export const ExportPilotHistoryResponse = zod.object({
+  "format": zod.enum(['model-pilot-history']),
+  "version": zod.number().int(),
+  "exportedAt": zod.coerce.date(),
+  "databasePath": zod.string(),
+  "sessions": zod.array(zod.object({
+  "id": zod.string(),
+  "date": zod.string(),
+  "project": zod.string(),
+  "task": zod.string(),
+  "model": zod.string(),
+  "actualTokens": zod.number().int(),
+  "predictedTokens": zod.object({
+  "min": zod.number(),
+  "max": zod.number(),
+  "confidence": zod.number().int()
+}),
+  "cost": zod.number(),
+  "complexity": zod.number().int(),
+  "recommendation": zod.string(),
+  "unsupportedFields": zod.array(zod.string())
+}))
+})
+
+
+/**
+ * @summary Clear local session history while preserving settings
+ */
+export const ClearPilotHistoryResponse = zod.object({
+  "clearedSessions": zod.number().int(),
+  "settingsPreserved": zod.boolean()
+})
+
+

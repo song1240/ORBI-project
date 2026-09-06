@@ -197,3 +197,32 @@ export interface PilotSettingsUpdate {
   mockMode?: boolean;
 }
 
+export interface PilotStorageSummary {
+  databasePath: string;
+  databaseBytes: number;
+  sessionCount: number;
+  projectCount: number;
+  settingsPreservedOnClear: boolean;
+  localOnly: boolean;
+}
+
+export type PilotHistoryExportFormat = typeof PilotHistoryExportFormat[keyof typeof PilotHistoryExportFormat];
+
+
+export const PilotHistoryExportFormat = {
+  'model-pilot-history': 'model-pilot-history',
+} as const;
+
+export interface PilotHistoryExport {
+  format: PilotHistoryExportFormat;
+  version: number;
+  exportedAt: string;
+  databasePath: string;
+  sessions: SessionHistoryItem[];
+}
+
+export interface PilotHistoryClearResult {
+  clearedSessions: number;
+  settingsPreserved: boolean;
+}
+

@@ -1,10 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getGetPilotSettingsQueryKey, useGetPilotSettings, useUpdatePilotSettings, getListPilotProvidersQueryKey, useListPilotProviders } from '@workspace/api-client-react';
+import {
+  exportPilotHistory,
+  getGetPilotSettingsQueryKey,
+  getGetPilotStorageQueryKey,
+  getListPilotProvidersQueryKey,
+  getListPilotSessionsQueryKey,
+  useClearPilotHistory,
+  useGetPilotSettings,
+  useGetPilotStorage,
+  useListPilotProviders,
+  useUpdatePilotSettings,
+} from '@workspace/api-client-react';
 import type { PilotProviderStatus } from '@workspace/api-client-react';
-import { Check, Info, Save, Server, ShieldCheck, SlidersHorizontal, Radio, Terminal, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { AlertTriangle, Check, Database, Download, Info, Loader2, Radio, RefreshCw, Save, Server, ShieldCheck, SlidersHorizontal, Terminal, Trash2 } from 'lucide-react';
 import { QueryState, Shell, PageHeading } from '@/components/model-pilot';
 import { useLanguage } from '@/lib/i18n';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type FormState = { port: string; contextWarning: string; contextCritical: string; switchThreshold: string; telemetry: boolean; mockMode: boolean };
 const defaults: FormState = { port: '3792', contextWarning: '75', contextCritical: '85', switchThreshold: '15', telemetry: false, mockMode: true };
@@ -13,10 +35,15 @@ export default function SettingsPage() {
   const { tr } = useLanguage();
   const settings = useGetPilotSettings({ query: { queryKey: getGetPilotSettingsQueryKey() } });
   const providers = useListPilotProviders({ query: { queryKey: getListPilotProvidersQueryKey() } });
+  const storage = useGetPilotStorage({ query: { queryKey: getGetPilotStorageQueryKey() } });
   const update = useUpdatePilotSettings();
+  const clearHistory = useClearPilotHistory();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(defaults);
   const [saved, setSaved] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+  const [clearedCount, setClearedCount] = useState<number | null>(null);
   const initialized = useRef(false);
   useEffect(() => {
     if (settings.data && !initialized.current) {
@@ -30,7 +57,34 @@ export default function SettingsPage() {
       onSuccess: result => { queryClient.setQueryData(getGetPilotSettingsQueryKey(), result); setSaved(true); },
     });
   };
-  if (settings.isLoading) return <Shell><QueryState type="loading" /></Shell>;
+  const exportHistory = async () => {
+    setExporting(true);
+    setExportError(false);
+    try {
+      const history = await exportPilotHistory();
+      const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `model-pilot-history-${history.exportedAt.slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError(true);
+    } finally {
+      setExporting(false);
+    }
+  };
+  const confirmClearHistory = () => {
+    clearHistory.mutate(undefined, {
+      onSuccess: result => {
+        setClearedCount(result.clearedSessions);
+        void queryClient.invalidateQueries({ queryKey: getGetPilotStorageQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: getListPilotSessionsQueryKey() });
+      },
+    });
+  };
+  if (settings.isLoading || storage.isLoading) return <Shell><QueryState type="loading" /></Shell>;
   if (settings.isError || !settings.data) return <Shell><QueryState type="error" onRetry={() => settings.refetch()} /></Shell>;
   const providerScanLocalOnly = providers.data?.available === false;
 
@@ -103,6 +157,33 @@ export default function SettingsPage() {
         </SettingsSection>
         <SettingsSection icon={ShieldCheck} title={tr('Privacy & telemetry', '개인정보 및 텔레메트리')} description={tr('Model Pilot is local-first. Choose which signals can leave the process boundary.', 'Model Pilot은 로컬 우선으로 동작합니다. 외부 전송이 허용되는 신호를 선택하세요.')}>
           <Toggle label={tr('Anonymous telemetry', '익명 텔레메트리')} detail={tr('Share aggregate performance signals to improve recommendations.', '추천 개선을 위해 집계된 성능 신호를 공유합니다.')} checked={form.telemetry} onChange={value => set('telemetry', value)} testId="switch-telemetry" /><Toggle label={tr('Mock mode', 'Mock 모드')} detail={tr('Use a generated local session when no coding agent is connected.', '연결된 코딩 에이전트가 없을 때 생성된 로컬 세션을 사용합니다.')} checked={form.mockMode} onChange={value => set('mockMode', value)} testId="switch-mock-mode" />
+        </SettingsSection>
+        <SettingsSection icon={Database} title={tr('Local history', '로컬 기록')} description={tr('Inspect, back up, or clear the session history stored on this computer. These actions never upload your data.', '이 컴퓨터에 저장된 세션 기록을 확인하거나 백업 또는 삭제합니다. 데이터는 업로드되지 않습니다.')}>
+          {storage.isError || !storage.data ? <div className="text-xs text-destructive" data-testid="status-storage-error">{tr('Could not read local storage details.', '로컬 저장소 정보를 읽을 수 없습니다.')}</div> : <div className="space-y-5">
+            <div className="rounded-lg border border-border/70 bg-secondary/35 p-4">
+              <div className="mono text-[10px] uppercase tracking-[.13em] text-muted-foreground">{tr('active database', '활성 데이터베이스')}</div>
+              <div className="mono mt-2 break-all text-[11px] leading-5 text-slate-200" data-testid="text-database-path">{storage.data.databasePath}</div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <StorageMetric label={tr('sessions', '세션')} value={String(storage.data.sessionCount)} testId="text-session-count" />
+                <StorageMetric label={tr('projects', '프로젝트')} value={String(storage.data.projectCount)} testId="text-project-count" />
+                <StorageMetric label={tr('disk use', '디스크 사용량')} value={formatBytes(storage.data.databaseBytes)} testId="text-database-size" />
+              </div>
+            </div>
+            <p className="text-[11px] leading-5 text-muted-foreground">{tr('Export creates a portable JSON backup in your Downloads folder. Keep that file if you may need the history later; clearing cannot be undone inside Model Pilot. Your provider, thresholds, telemetry, and mock-mode settings are preserved.', '내보내기는 다운로드 폴더에 이식 가능한 JSON 백업을 만듭니다. 기록이 나중에 필요할 수 있다면 파일을 보관하세요. 삭제한 기록은 Model Pilot에서 복구할 수 없습니다. Provider, 임계값, 텔레메트리 및 Mock 모드 설정은 유지됩니다.')}</p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => void exportHistory()} disabled={exporting} className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary px-3.5 py-2.5 text-xs font-semibold text-slate-100 hover:border-primary/40 disabled:cursor-wait disabled:opacity-60" data-testid="button-export-history"><Download size={14} />{exporting ? tr('Preparing export…', '내보내기 준비 중…') : tr('Export JSON backup', 'JSON 백업 내보내기')}</button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild><button disabled={clearHistory.isPending || storage.data.sessionCount === 0} className="inline-flex items-center gap-2 rounded-md border border-destructive/35 bg-destructive/10 px-3.5 py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/15 disabled:cursor-not-allowed disabled:opacity-50" data-testid="button-clear-history"><Trash2 size={14} />{tr('Clear history', '기록 삭제')}</button></AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader><AlertDialogTitle>{tr('Clear all local session history?', '모든 로컬 세션 기록을 삭제할까요?')}</AlertDialogTitle><AlertDialogDescription>{tr('This permanently removes session and project history from the active local database. Pilot Settings stay unchanged. Export a JSON backup first if you may need to recover the history.', '활성 로컬 데이터베이스에서 세션 및 프로젝트 기록을 영구적으로 삭제합니다. Pilot 설정은 변경되지 않습니다. 기록을 복구해야 할 수 있다면 먼저 JSON 백업을 내보내세요.')}</AlertDialogDescription></AlertDialogHeader>
+                  <AlertDialogFooter><AlertDialogCancel data-testid="button-cancel-clear-history">{tr('Cancel', '취소')}</AlertDialogCancel><AlertDialogAction onClick={confirmClearHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="button-confirm-clear-history">{tr('Clear permanently', '영구 삭제')}</AlertDialogAction></AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+            {exportError && <div className="text-xs text-destructive" data-testid="status-export-error">{tr('Could not create the backup. Your local history was not changed.', '백업을 만들 수 없습니다. 로컬 기록은 변경되지 않았습니다.')}</div>}
+            {clearHistory.isError && <div className="text-xs text-destructive" data-testid="status-clear-error">{tr('Could not clear history. No settings were changed.', '기록을 삭제할 수 없습니다. 설정은 변경되지 않았습니다.')}</div>}
+            {clearedCount !== null && <div className="text-xs text-primary" data-testid="status-history-cleared">{tr(`${clearedCount} sessions cleared. Pilot Settings were preserved.`, `${clearedCount}개 세션을 삭제했습니다. Pilot 설정은 유지되었습니다.`)}</div>}
+          </div>}
         </SettingsSection>
         {update.isError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive" data-testid="status-save-error">{tr('Could not save settings. Check the local bridge and try again.', '설정을 저장할 수 없습니다. 로컬 브리지를 확인한 후 다시 시도하세요.')}</div>}
         <div className="flex justify-end"><button onClick={save} disabled={update.isPending} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition-all hover:brightness-110 disabled:cursor-wait disabled:opacity-60" data-testid="button-save-settings"><Save size={15} />{update.isPending ? tr('Saving changes…', '변경사항 저장 중…') : tr('Save changes', '변경사항 저장')}</button></div>
@@ -204,3 +285,5 @@ function AuthPill({ auth }: { auth: PilotProviderStatus['authentication'] }) {
 function Field({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) { return <label className="block"><span className="mono block text-[10px] uppercase tracking-[.13em] text-muted-foreground">{label}</span><span className="mt-1 block text-[10px] text-muted-foreground">{hint}</span>{children}</label>; }
 function Toggle({ label, detail, checked, onChange, testId }: { label: string; detail: string; checked: boolean; onChange: (value: boolean) => void; testId: string }) { return <div className="flex items-center justify-between gap-4 border-b border-border/60 py-3.5 first:pt-0 last:border-0 last:pb-0"><div><div className="text-xs font-semibold text-slate-200">{label}</div><div className="mt-1 text-[11px] leading-5 text-muted-foreground">{detail}</div></div><button role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${checked ? 'border-primary/50 bg-primary/25' : 'border-border bg-secondary'}`} data-testid={testId}><span className={`absolute top-1 h-4 w-4 rounded-full transition-transform ${checked ? 'translate-x-6 bg-primary' : 'translate-x-1 bg-muted-foreground'}`} /></button></div>; }
 function StatusLine({ label, value }: { label: string; value: string }) { return <div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">{label}</span><span className="mono text-slate-200">{value}</span></div>; }
+function StorageMetric({ label, value, testId }: { label: string; value: string; testId: string }) { return <div><div className="text-[10px] text-muted-foreground">{label}</div><div className="mono mt-1 text-xs text-slate-100" data-testid={testId}>{value}</div></div>; }
+function formatBytes(bytes: number) { if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`; return `${(bytes / 1024 ** 2).toFixed(1)} MB`; }

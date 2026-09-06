@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, renameSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import Database from "better-sqlite3";
 import type {
@@ -216,6 +216,12 @@ export function modelPilotDatabasePath(): string {
   return join(modelPilotDataDirectory(), "model-pilot.sqlite");
 }
 
+function databaseBytes(path: string): number {
+  return ["", "-wal", "-shm"]
+    .map((suffix) => `${path}${suffix}`)
+    .filter(existsSync)
+    .reduce((total, file) => total + statSync(file).size, 0);
+}
 function configure(db: Database.Database) {
   db.pragma("foreign_keys = ON");
   db.pragma("journal_mode = WAL");
@@ -581,6 +587,25 @@ export function listCompletedSessions(limit = 100): SessionHistoryItem[] {
   }));
 }
 
+export function getStorageSummary() {
+  const connection = db();
+  const sessionCount = (
+    connection.prepare("SELECT COUNT(*) AS count FROM sessions").get() as { count: number }
+  ).count;
+  const projectCount = (
+    connection.prepare("SELECT COUNT(*) AS count FROM projects").get() as { count: number }
+  ).count;
+  const path = modelPilotDatabasePath();
+
+  return {
+    databasePath: path,
+    databaseBytes: databaseBytes(path),
+    sessionCount,
+    projectCount,
+    settingsPreservedOnClear: true,
+    localOnly: true,
+  };
+}
 export function loadCompletedSession(id: string): PersistedClaudeSession | undefined {
   const row = db().prepare(`
     SELECT
@@ -626,4 +651,26 @@ export function loadCompletedSession(id: string): PersistedClaudeSession | undef
     sessionCost: row.session_cost ?? undefined,
     modifiedFiles: row.modified_files,
   };
+}
+
+export function exportCompletedSessions() {
+  return {
+    format: "model-pilot-history" as const,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    databasePath: modelPilotDatabasePath(),
+    sessions: listCompletedSessions(Number.MAX_SAFE_INTEGER),
+  };
+}
+
+export function clearCompletedSessions() {
+  const connection = db();
+  return connection.transaction(() => {
+    const clearedSessions = (
+      connection.prepare("SELECT COUNT(*) AS count FROM sessions").get() as { count: number }
+    ).count;
+    connection.prepare("DELETE FROM sessions").run();
+    connection.prepare("DELETE FROM projects").run();
+    return { clearedSessions, settingsPreserved: true };
+  })();
 }

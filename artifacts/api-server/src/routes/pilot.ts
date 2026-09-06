@@ -5,8 +5,11 @@ import { resolve } from "node:path";
 import {
   IngestClaudeCodeEventBody,
   IngestClaudeCodeEventResponse,
+  ClearPilotHistoryResponse,
+  ExportPilotHistoryResponse,
   GetPilotLiveResponse,
   GetPilotSettingsResponse,
+  GetPilotStorageResponse,
   ListPilotProvidersResponse,
   ListPilotSessionsResponse,
   UpdatePilotSettingsBody,
@@ -23,6 +26,9 @@ import {
   listClaudeCodeSessions,
 } from "../model-pilot/claude-code-provider";
 import {
+  clearCompletedSessions,
+  exportCompletedSessions,
+  getStorageSummary,
   loadSettings,
   saveSettings,
 } from "../model-pilot/persistence";
@@ -149,6 +155,18 @@ router.patch("/pilot/settings", (req, res) => {
   saveSettings(nextSettings);
   settings = nextSettings;
   res.json(UpdatePilotSettingsResponse.parse(settings));
+});
+
+router.get("/pilot/storage", (_req, res) => {
+  res.json(GetPilotStorageResponse.parse(getStorageSummary()));
+});
+
+router.get("/pilot/history/export", (_req, res) => {
+  res.json(ExportPilotHistoryResponse.parse(exportCompletedSessions()));
+});
+
+router.delete("/pilot/history", (_req, res) => {
+  res.json(ClearPilotHistoryResponse.parse(clearCompletedSessions()));
 });
 
 export default router;
