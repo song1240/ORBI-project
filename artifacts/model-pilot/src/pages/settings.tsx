@@ -6,7 +6,7 @@ import { QueryState, Shell, PageHeading } from '@/components/model-pilot';
 import { useLanguage } from '@/lib/i18n';
 
 type FormState = { provider: string; port: string; contextWarning: string; contextCritical: string; switchThreshold: string; telemetry: boolean; mockMode: boolean };
-const defaults: FormState = { provider: 'anthropic', port: '4317', contextWarning: '70', contextCritical: '88', switchThreshold: '76', telemetry: true, mockMode: false };
+const defaults: FormState = { provider: 'anthropic', port: '3792', contextWarning: '70', contextCritical: '88', switchThreshold: '76', telemetry: true, mockMode: false };
 
 export default function SettingsPage() {
   const { tr } = useLanguage();

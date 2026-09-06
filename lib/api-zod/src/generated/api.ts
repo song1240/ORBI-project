@@ -65,7 +65,10 @@ export const GetPilotLiveResponse = zod.object({
   "timestamp": zod.string(),
   "kind": zod.string()
 })),
-  "updatedAt": zod.coerce.date()
+  "updatedAt": zod.coerce.date(),
+  "dataSource": zod.enum(['claude-code', 'mock', 'disconnected']),
+  "sessionId": zod.string().nullable(),
+  "unsupportedFields": zod.array(zod.string())
 })
 
 
@@ -86,9 +89,25 @@ export const ListPilotSessionsResponseItem = zod.object({
 }),
   "cost": zod.number(),
   "complexity": zod.number().int(),
-  "recommendation": zod.string()
+  "recommendation": zod.string(),
+  "unsupportedFields": zod.array(zod.string())
 })
 export const ListPilotSessionsResponse = zod.array(ListPilotSessionsResponseItem)
+
+
+/**
+ * @summary Ingest a local Claude Code hook or status-line event
+ */
+export const IngestClaudeCodeEventBody = zod.object({
+  "source": zod.enum(['hook', 'status-line']),
+  "payload": zod.record(zod.string(), zod.unknown())
+})
+
+export const IngestClaudeCodeEventResponse = zod.object({
+  "accepted": zod.boolean(),
+  "sessionId": zod.string(),
+  "event": zod.string()
+})
 
 
 /**

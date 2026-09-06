@@ -148,15 +148,29 @@ Do not commit `.model-pilot`, environment files, databases, or logs.
 
 ## Claude Code integration
 
-The production integration is designed around a provider abstraction rather than embedding Claude-specific behavior in the analyzer or UI. The target adapter consumes supported Claude Code hooks/status information for:
+Start Model Pilot, then install the local Claude Code bridge:
+
+```powershell
+pnpm run claude:setup
+```
+
+Restart Claude Code after setup. Model Pilot then merges supported lifecycle hooks with Claude Code's status-line data:
 
 - session start and end;
 - current model and session ID;
 - user prompt submission;
-- pre-tool and post-tool activity;
+- successful tool activity;
 - context and cost when reported by Claude Code.
 
-Until that adapter is enabled, keep **Mock Mode** on in Pilot Settings. Missing production fields will be shown as unavailable rather than fabricated.
+The setup command updates `%USERPROFILE%\.claude\settings.json` and creates a timestamped backup before writing. It preserves existing hooks and refuses to replace an existing custom status line. To replace one intentionally after reviewing it, run:
+
+```powershell
+pnpm run claude:setup -- --force-status-line
+```
+
+All bridge requests go to `127.0.0.1:3792`; the endpoint rejects non-local requests, browser-originated requests, and requests without the locally generated bridge token. The token stays under the Git-ignored `.model-pilot` runtime directory. Hook handlers run asynchronously and stay silent if Model Pilot is stopped. The status line continues to display the model, context percentage, and estimated Claude Code session cost while indicating whether Model Pilot is connected.
+
+Real Claude Code data takes precedence whenever an active session is detected. Keep **Mock Mode** on to show demonstration data only when Claude Code is absent, or turn it off to show an explicit waiting state. Fields not supplied by supported Claude Code events are labeled unavailable rather than fabricated.
 
 ## Configuration
 

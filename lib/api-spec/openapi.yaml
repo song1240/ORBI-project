@@ -52,6 +52,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SessionHistoryItem"
+  /pilot/claude-code/events:
+    post:
+      operationId: ingestClaudeCodeEvent
+      tags: [pilot]
+      summary: Ingest a local Claude Code hook or status-line event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaudeCodeEvent"
+      responses:
+        "202":
+          description: Event accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaudeCodeEventAccepted"
   /pilot/settings:
     get:
       operationId: getPilotSettings
@@ -115,6 +133,9 @@ components:
         - recommendation
         - recentActivity
         - updatedAt
+        - dataSource
+        - sessionId
+        - unsupportedFields
       properties:
         connection:
           type: string
@@ -167,6 +188,15 @@ components:
         updatedAt:
           type: string
           format: date-time
+        dataSource:
+          type: string
+          enum: [claude-code, mock, disconnected]
+        sessionId:
+          type: ["string", "null"]
+        unsupportedFields:
+          type: array
+          items:
+            type: string
     EstimateRange:
       type: object
       required: [min, max, confidence]
@@ -209,7 +239,7 @@ components:
           type: string
     SessionHistoryItem:
       type: object
-      required: [id, date, project, task, model, actualTokens, predictedTokens, cost, complexity, recommendation]
+      required: [id, date, project, task, model, actualTokens, predictedTokens, cost, complexity, recommendation, unsupportedFields]
       properties:
         id:
           type: string
@@ -230,6 +260,30 @@ components:
         complexity:
           type: integer
         recommendation:
+          type: string
+        unsupportedFields:
+          type: array
+          items:
+            type: string
+    ClaudeCodeEvent:
+      type: object
+      required: [source, payload]
+      properties:
+        source:
+          type: string
+          enum: [hook, status-line]
+        payload:
+          type: object
+          additionalProperties: true
+    ClaudeCodeEventAccepted:
+      type: object
+      required: [accepted, sessionId, event]
+      properties:
+        accepted:
+          type: boolean
+        sessionId:
+          type: string
+        event:
           type: string
     PilotSettings:
       type: object

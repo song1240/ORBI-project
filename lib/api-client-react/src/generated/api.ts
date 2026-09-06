@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ClaudeCodeEvent,
+  ClaudeCodeEventAccepted,
   HealthStatus,
   LiveSnapshot,
   PilotSettings,
@@ -285,6 +287,77 @@ export function useListPilotSessions<TData = Awaited<ReturnType<typeof listPilot
 
 
 
+
+export const getIngestClaudeCodeEventUrl = () => {
+
+
+
+
+  return `/api/pilot/claude-code/events`
+}
+
+/**
+ * @summary Ingest a local Claude Code hook or status-line event
+ */
+export const ingestClaudeCodeEvent = async (claudeCodeEvent: ClaudeCodeEvent, options?: Parameters<typeof customFetch>[1]): Promise<ClaudeCodeEventAccepted> => {
+
+  return customFetch<ClaudeCodeEventAccepted>(getIngestClaudeCodeEventUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(claudeCodeEvent)
+  }
+);}
+
+
+
+
+
+export const getIngestClaudeCodeEventMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ingestClaudeCodeEvent>>, TError,{data: BodyType<ClaudeCodeEvent>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof ingestClaudeCodeEvent>>, TError,{data: BodyType<ClaudeCodeEvent>}, TContext> => {
+
+const mutationKey = ['ingestClaudeCodeEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ingestClaudeCodeEvent>>, {data: BodyType<ClaudeCodeEvent>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  ingestClaudeCodeEvent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IngestClaudeCodeEventMutationResult = NonNullable<Awaited<ReturnType<typeof ingestClaudeCodeEvent>>>
+    export type IngestClaudeCodeEventMutationBody = BodyType<ClaudeCodeEvent>
+    export type IngestClaudeCodeEventMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Ingest a local Claude Code hook or status-line event
+ */
+export const useIngestClaudeCodeEvent = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ingestClaudeCodeEvent>>, TError,{data: BodyType<ClaudeCodeEvent>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof ingestClaudeCodeEvent>>,
+        TError,
+        {data: BodyType<ClaudeCodeEvent>},
+        TContext
+      > => {
+      return useMutation(getIngestClaudeCodeEventMutationOptions(options));
+    }
 
 export const getGetPilotSettingsUrl = () => {
 

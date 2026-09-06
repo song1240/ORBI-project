@@ -9,6 +9,15 @@ export interface HealthStatus {
   status: string;
 }
 
+export type LiveSnapshotDataSource = typeof LiveSnapshotDataSource[keyof typeof LiveSnapshotDataSource];
+
+
+export const LiveSnapshotDataSource = {
+  'claude-code': 'claude-code',
+  mock: 'mock',
+  disconnected: 'disconnected',
+} as const;
+
 export interface EstimateRange {
   min: number;
   max: number;
@@ -58,6 +67,10 @@ export interface LiveSnapshot {
   recommendation: Recommendation;
   recentActivity: ActivityItem[];
   updatedAt: string;
+  dataSource: LiveSnapshotDataSource;
+  /** @nullable */
+  sessionId: string | null;
+  unsupportedFields: string[];
 }
 
 export interface SessionHistoryItem {
@@ -71,6 +84,28 @@ export interface SessionHistoryItem {
   cost: number;
   complexity: number;
   recommendation: string;
+  unsupportedFields: string[];
+}
+
+export type ClaudeCodeEventSource = typeof ClaudeCodeEventSource[keyof typeof ClaudeCodeEventSource];
+
+
+export const ClaudeCodeEventSource = {
+  hook: 'hook',
+  'status-line': 'status-line',
+} as const;
+
+export type ClaudeCodeEventPayload = { [key: string]: unknown };
+
+export interface ClaudeCodeEvent {
+  source: ClaudeCodeEventSource;
+  payload: ClaudeCodeEventPayload;
+}
+
+export interface ClaudeCodeEventAccepted {
+  accepted: boolean;
+  sessionId: string;
+  event: string;
 }
 
 export interface PilotSettings {

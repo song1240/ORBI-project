@@ -7,6 +7,7 @@
  */
 import type { ActivityItem } from './activityItem';
 import type { EstimateRange } from './estimateRange';
+import type { LiveSnapshotDataSource } from './liveSnapshotDataSource';
 import type { Recommendation } from './recommendation';
 
 export interface LiveSnapshot {
@@ -34,4 +35,8 @@ export interface LiveSnapshot {
   recommendation: Recommendation;
   recentActivity: ActivityItem[];
   updatedAt: Date;
+  dataSource: LiveSnapshotDataSource;
+  /** @nullable */
+  sessionId: string | null;
+  unsupportedFields: string[];
 }

@@ -159,8 +159,15 @@ export function SectionLabel({ children, action }: { children: React.ReactNode; 
   return <div className="mb-3 flex items-center justify-between"><h2 className="mono text-[10px] font-medium uppercase tracking-[.18em] text-muted-foreground">{children}</h2>{action}</div>;
 }
 
-export function ContextMeter({ used, limit, warning = .7, critical = .88 }: { used: number; limit: number; warning?: number; critical?: number }) {
+export function ContextMeter({ used, limit, available = true, warning = .7, critical = .88 }: { used: number; limit: number; available?: boolean; warning?: number; critical?: number }) {
   const { tr } = useLanguage();
+  if (!available) {
+    return <div data-testid="meter-context-unavailable">
+      <span className="mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">{tr('context window', '컨텍스트 창')}</span>
+      <div className="mt-3 text-sm font-medium text-slate-300">{tr('Not provided by Claude Code', 'Claude Code에서 제공되지 않음')}</div>
+      <p className="mt-2 text-[11px] leading-5 text-muted-foreground">{tr('Waiting for supported status-line data.', '지원되는 status-line 데이터를 기다리는 중입니다.')}</p>
+    </div>;
+  }
   const ratio = limit ? used / limit : 0;
   const tone = ratio >= critical ? 'danger' : ratio >= warning ? 'accent' : 'primary';
   const bar = tone === 'danger' ? 'bg-destructive' : tone === 'accent' ? 'bg-accent' : 'bg-primary';

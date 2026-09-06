@@ -18,4 +18,5 @@ export interface SessionHistoryItem {
   cost: number;
   complexity: number;
   recommendation: string;
+  unsupportedFields: string[];
 }

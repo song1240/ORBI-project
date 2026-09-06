@@ -7,9 +7,14 @@
  */
 
 export * from './activityItem';
+export * from './claudeCodeEvent';
+export * from './claudeCodeEventAccepted';
+export * from './claudeCodeEventPayload';
+export * from './claudeCodeEventSource';
 export * from './estimateRange';
 export * from './healthStatus';
 export * from './liveSnapshot';
+export * from './liveSnapshotDataSource';
 export * from './pilotSettings';
 export * from './pilotSettingsUpdate';
 export * from './recommendation';

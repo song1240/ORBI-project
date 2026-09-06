@@ -53,6 +53,9 @@ export function getMockSnapshot(settings: PilotRuntimeSettings) {
       { id: "a3", label: "Task classified", detail: analysis.taskType, timestamp: new Date(now - 68_000).toISOString(), kind: "analysis" },
     ],
     updatedAt: new Date().toISOString(),
+    dataSource: "mock" as const,
+    sessionId: "mock-session",
+    unsupportedFields: [],
   };
 }
 
@@ -68,6 +71,7 @@ export const sessionHistory = [
     cost: 2.31,
     complexity: 85,
     recommendation: "KEEP",
+    unsupportedFields: [],
   },
   {
     id: "sess-1041",
@@ -80,6 +84,7 @@ export const sessionHistory = [
     cost: 0.74,
     complexity: 52,
     recommendation: "KEEP",
+    unsupportedFields: [],
   },
   {
     id: "sess-1040",
@@ -92,5 +97,6 @@ export const sessionHistory = [
     cost: 0.98,
     complexity: 91,
     recommendation: "UPGRADE",
+    unsupportedFields: [],
   },
 ];
