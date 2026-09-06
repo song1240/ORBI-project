@@ -12,6 +12,7 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "claude:setup": "node ./scripts/setup-claude-code.mjs",
+    "data:reset": "node ./scripts/reset-model-pilot-data.mjs",
     "windows:install": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/install-windows.ps1",
     "windows:start": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-windows.ps1",
     "windows:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/stop-windows.ps1"

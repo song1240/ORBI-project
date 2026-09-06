@@ -56,7 +56,7 @@ The installer:
 3. installs the locked dependencies, including Windows-native build binaries;
 4. runs the full TypeScript check;
 5. builds the API and dashboard;
-6. creates `.model-pilot\logs`.
+6. creates the local `.model-pilot\logs` and `.model-pilot\data` directories.
 
 To install dependencies without building:
 
@@ -107,6 +107,7 @@ Run these commands from the repository root:
 | `pnpm run test` | Run tests provided by workspace packages |
 | `pnpm run lint` | Run linters provided by workspace packages |
 | `pnpm run typecheck` | Run the full TypeScript check |
+| `pnpm run data:reset` | Reset local SQLite data while retaining a timestamped backup |
 
 `pnpm run start` expects a successful build first. On Windows, `.\scripts\start-windows.ps1` is preferred because it can build missing output, opens the browser, records process identity, and provides a safe stop command.
 
@@ -183,7 +184,27 @@ Pilot Settings currently exposes:
 - telemetry;
 - Mock Mode.
 
-The Windows runtime ports are currently fixed to 3791 for the dashboard and 3792 for the API. Direct `pnpm` launches may override `DASHBOARD_PORT`, `API_PORT`, `LOCAL_API_PORT`, and `MODEL_PILOT_DATA_DIR`. The settings port field is reserved for the persistence/configuration follow-up.
+Settings are stored in the local SQLite database and survive API restarts. The Windows runtime ports are currently fixed to 3791 for the dashboard and 3792 for the API. Direct `pnpm` launches may override `DASHBOARD_PORT`, `API_PORT`, `LOCAL_API_PORT`, and `MODEL_PILOT_DATA_DIR`.
+
+## Local data and recovery
+
+Model Pilot stores its database at:
+
+```text
+.model-pilot\data\model-pilot.sqlite
+```
+
+`MODEL_PILOT_DATA_DIR` can override the containing directory for direct local launches. The database contains completed Claude Code sessions, projects, task analysis, token and cost predictions, recommendations, actual context/cost usage, and Pilot Settings. It does not contain API keys.
+
+Stop Model Pilot before moving or resetting the database. To start again with empty settings and session history while retaining the old database as a timestamped backup:
+
+```powershell
+.\scripts\stop-windows.ps1
+pnpm run data:reset
+.\scripts\start-windows.ps1
+```
+
+Backups created by reset are kept under `.model-pilot\backups`; SQLite WAL, shared-memory, and rollback-journal sidecars are retained with the main database when present. If SQLite reports a corrupt database during startup, Model Pilot retains the complete original database file set beside it with a `.corrupt-<timestamp>` suffix, writes the recovery location to the API error log, and creates a fresh database. Lock, unknown migration-version, and other migration errors do not delete or replace the database; the API stops so the cause can be fixed safely.
 
 ## Privacy and security
 
@@ -247,11 +268,10 @@ Do not delete `pnpm-lock.yaml`; it is the reproducible dependency source.
 ## Roadmap
 
 1. Real Claude Code hooks/status provider
-2. SQLite-backed sessions, settings, predictions, and recommendation outcomes
-3. Predictor calibration using predicted-versus-actual history
-4. Optional Tauri desktop wrapper
-5. Additional Codex, Gemini CLI, and OpenCode providers
-6. Advisory multi-model routing, followed only later by opt-in automation
+2. Predictor calibration using predicted-versus-actual history
+3. Optional Tauri desktop wrapper
+4. Additional Codex, Gemini CLI, and OpenCode providers
+5. Advisory multi-model routing, followed only later by opt-in automation
 
 ## Out of scope for this MVP
 

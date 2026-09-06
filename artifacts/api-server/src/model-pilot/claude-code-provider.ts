@@ -6,6 +6,12 @@ import type {
   SessionHistoryItem,
 } from "@workspace/api-zod";
 import { analyzeTask, predictResources, recommendModel, type TaskAnalysis } from "./engine";
+import {
+  listCompletedSessions,
+  loadCompletedSession,
+  saveCompletedSession,
+} from "./persistence";
+import type { PilotRuntimeSettings } from "./settings";
 
 type JsonRecord = Record<string, unknown>;
 type EventSource = "hook" | "status-line";
@@ -29,10 +35,10 @@ interface ClaudeSession {
   sessionCost?: number;
   activities: ActivityItem[];
   modifiedFiles: Set<string>;
+  persistedModifiedFiles: number;
 }
 
 const sessions = new Map<string, ClaudeSession>();
-const completedSessions: SessionHistoryItem[] = [];
 let activeSessionId: string | undefined;
 let activitySequence = 0;
 
@@ -102,13 +108,22 @@ function ensureSession(payload: JsonRecord): ClaudeSession {
   let session = sessions.get(id);
   if (!session) {
     const now = new Date().toISOString();
-    session = {
-      id,
-      startedAt: now,
-      updatedAt: now,
-      activities: [],
-      modifiedFiles: new Set(),
-    };
+    const persisted = loadCompletedSession(id);
+    session = persisted
+      ? {
+          ...persisted,
+          activities: [],
+          modifiedFiles: new Set(),
+          persistedModifiedFiles: persisted.modifiedFiles,
+        }
+      : {
+          id,
+          startedAt: now,
+          updatedAt: now,
+          activities: [],
+          modifiedFiles: new Set(),
+          persistedModifiedFiles: 0,
+        };
     sessions.set(id, session);
   }
 
@@ -130,7 +145,11 @@ function toolDetail(payload: JsonRecord): string {
   return toolName;
 }
 
-function updateFromHook(session: ClaudeSession, payload: JsonRecord) {
+function updateFromHook(
+  session: ClaudeSession,
+  payload: JsonRecord,
+  settings: PilotRuntimeSettings,
+) {
   const event = text(payload.hook_event_name) ?? "UnknownHook";
   const model = text(payload.model);
   if (model) {
@@ -141,6 +160,7 @@ function updateFromHook(session: ClaudeSession, payload: JsonRecord) {
   if (event === "SessionStart") {
     activeSessionId = session.id;
     session.endedAt = undefined;
+    session.persistedModifiedFiles = 0;
     addActivity(session, "Session started", text(payload.source) ?? "startup", "session");
     return;
   }
@@ -181,12 +201,16 @@ function updateFromHook(session: ClaudeSession, payload: JsonRecord) {
   if (event === "SessionEnd") {
     session.endedAt = new Date().toISOString();
     addActivity(session, "Session ended", text(payload.reason) ?? "Reason not provided", "session");
-    finishSession(session);
+    finishSession(session, settings);
     if (activeSessionId === session.id) activeSessionId = undefined;
   }
 }
 
-function updateFromStatusLine(session: ClaudeSession, payload: JsonRecord) {
+function updateFromStatusLine(
+  session: ClaudeSession,
+  payload: JsonRecord,
+  settings: PilotRuntimeSettings,
+) {
   const model = record(payload.model);
   session.modelId = text(model?.id) ?? session.modelId;
   session.modelName = text(model?.display_name) ?? session.modelName;
@@ -221,18 +245,31 @@ function updateFromStatusLine(session: ClaudeSession, payload: JsonRecord) {
   const cost = record(payload.cost);
   session.sessionCost = numberValue(cost?.total_cost_usd) ?? session.sessionCost;
   if (session.endedAt) {
-    finishSession(session);
+    finishSession(session, settings);
   } else {
     activeSessionId = session.id;
   }
 }
 
-function finishSession(session: ClaudeSession) {
+function finishSession(session: ClaudeSession, settings: PilotRuntimeSettings) {
   const prompt = session.prompt;
   const analysis = prompt ? analyzeTask(prompt) : emptyAnalysis;
   const prediction = prompt
     ? predictResources(analysis)
-    : { tokenEstimate: { min: 0, max: 0, confidence: 0 } };
+    : {
+        tokenEstimate: { min: 0, max: 0, confidence: 0 },
+        costEstimate: { min: 0, max: 0, confidence: 0 },
+      };
+  const recommendation = prompt
+    ? recommendModel(analysis, contextUsage(session), settings.switchThreshold)
+    : {
+        action: "UNAVAILABLE",
+        title: "RECOMMENDATION UNAVAILABLE",
+        reason: "Claude Code did not provide a prompt for this session.",
+        currentFit: 0,
+        recommendedFit: 0,
+        recommendedModel: null,
+      };
   const unsupportedFields = [
     !session.modelName && "model",
     session.contextUsed === undefined && "actualTokens",
@@ -251,15 +288,47 @@ function finishSession(session: ClaudeSession) {
     cost: session.sessionCost ?? 0,
     complexity: analysis.complexityScore,
     recommendation: prompt
-      ? recommendModel(analysis, contextUsage(session), 15).action
+      ? recommendation.action
       : "UNAVAILABLE",
     unsupportedFields,
   };
 
-  const existingIndex = completedSessions.findIndex((item) => item.id === session.id);
-  if (existingIndex >= 0) completedSessions.splice(existingIndex, 1);
-  completedSessions.unshift(historyItem);
-  if (completedSessions.length > 100) completedSessions.length = 100;
+  const contextRisk =
+    session.contextUsed === undefined || session.contextLimit === undefined
+      ? "UNKNOWN"
+      : contextUsage(session) >= settings.contextCritical
+        ? "CRITICAL"
+        : contextUsage(session) >= settings.contextWarning
+          ? "WARNING"
+          : contextUsage(session) >= 60
+            ? "WATCH"
+            : "NORMAL";
+
+  saveCompletedSession({
+    id: session.id,
+    provider: "claude-code",
+    startedAt: session.startedAt,
+    endedAt: session.endedAt ?? session.updatedAt,
+    updatedAt: session.updatedAt,
+    cwd: session.cwd,
+    projectDir: session.projectDir,
+    repository: session.repository,
+    project: historyItem.project,
+    branch: session.branch,
+    prompt,
+    displayTask: historyItem.task,
+    modelId: session.modelId,
+    modelName: session.modelName ?? session.modelId,
+    modifiedFiles: session.persistedModifiedFiles + session.modifiedFiles.size,
+    contextUsed: session.contextUsed,
+    contextLimit: session.contextLimit,
+    sessionCost: session.sessionCost,
+    contextRisk,
+    unsupportedFields,
+    analysis,
+    prediction,
+    recommendation,
+  });
 }
 
 function contextUsage(session: ClaudeSession): number {
@@ -268,10 +337,14 @@ function contextUsage(session: ClaudeSession): number {
     : 0;
 }
 
-export function ingestClaudeCodeEvent(source: EventSource, payload: JsonRecord) {
+export function ingestClaudeCodeEvent(
+  source: EventSource,
+  payload: JsonRecord,
+  settings: PilotRuntimeSettings,
+) {
   const session = ensureSession(payload);
-  if (source === "status-line") updateFromStatusLine(session, payload);
-  else updateFromHook(session, payload);
+  if (source === "status-line") updateFromStatusLine(session, payload, settings);
+  else updateFromHook(session, payload, settings);
 
   return {
     accepted: true,
@@ -388,5 +461,5 @@ export function getDisconnectedSnapshot(): LiveSnapshot {
 }
 
 export function listClaudeCodeSessions(): SessionHistoryItem[] {
-  return completedSessions;
+  return listCompletedSessions();
 }

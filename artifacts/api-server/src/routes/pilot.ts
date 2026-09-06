@@ -14,7 +14,6 @@ import {
 import {
   getMockSnapshot,
   sessionHistory,
-  type PilotRuntimeSettings,
 } from "../model-pilot/mock-provider";
 import {
   getClaudeCodeSnapshot,
@@ -22,6 +21,14 @@ import {
   ingestClaudeCodeEvent,
   listClaudeCodeSessions,
 } from "../model-pilot/claude-code-provider";
+import {
+  loadSettings,
+  saveSettings,
+} from "../model-pilot/persistence";
+import {
+  DEFAULT_PILOT_SETTINGS,
+  type PilotRuntimeSettings,
+} from "../model-pilot/settings";
 
 const router: IRouter = Router();
 
@@ -50,15 +57,7 @@ function tokenMatches(expected: string, provided: string): boolean {
     timingSafeEqual(expectedBytes, providedBytes);
 }
 
-let settings: PilotRuntimeSettings = {
-  provider: "claude-code",
-  port: 3792,
-  contextWarning: 75,
-  contextCritical: 85,
-  switchThreshold: 15,
-  telemetry: false,
-  mockMode: true,
-};
+let settings: PilotRuntimeSettings = loadSettings(DEFAULT_PILOT_SETTINGS);
 
 router.get("/pilot/live", (_req, res) => {
   const realSnapshot = getClaudeCodeSnapshot(settings);
@@ -106,7 +105,7 @@ router.post("/pilot/claude-code/events", (req, res) => {
 
     try {
     const event = IngestClaudeCodeEventBody.parse(req.body);
-    const result = ingestClaudeCodeEvent(event.source, event.payload);
+    const result = ingestClaudeCodeEvent(event.source, event.payload, settings);
     res.status(202).json(IngestClaudeCodeEventResponse.parse(result));
     } catch (error) {
       res.status(400).json({
@@ -122,7 +121,9 @@ router.get("/pilot/settings", (_req, res) => {
 
 router.patch("/pilot/settings", (req, res) => {
   const update = UpdatePilotSettingsBody.parse(req.body);
-  settings = { ...settings, ...update };
+  const nextSettings = { ...settings, ...update };
+  saveSettings(nextSettings);
+  settings = nextSettings;
   res.json(UpdatePilotSettingsResponse.parse(settings));
 });
 

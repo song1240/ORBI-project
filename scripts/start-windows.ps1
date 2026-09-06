@@ -9,6 +9,7 @@ Set-StrictMode -Version Latest
 
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $RuntimeDir = Join-Path $Root ".model-pilot"
+$DataDir = Join-Path $RuntimeDir "data"
 $LogDir = Join-Path $RuntimeDir "logs"
 $PidFile = Join-Path $RuntimeDir "processes.json"
 $DashboardUrl = "http://localhost:3791"
@@ -75,7 +76,7 @@ if ($env:OS -ne "Windows_NT") {
   throw "This launcher must be run on Windows."
 }
 
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+New-Item -ItemType Directory -Force -Path $LogDir, $DataDir | Out-Null
 Set-Location $Root
 
 if (Test-Path $PidFile) {
@@ -133,6 +134,7 @@ try {
   $env:PORT = "$ApiPort"
   $env:LOCAL_WINDOWS = "1"
   $env:NODE_ENV = "production"
+  $env:MODEL_PILOT_DATA_DIR = $DataDir
   $ApiProcess = Start-Process -FilePath $Node.Source `
     -ArgumentList @("--enable-source-maps", (Quote-ProcessArgument $ApiEntry)) `
     -WorkingDirectory $Root -WindowStyle Hidden -PassThru `

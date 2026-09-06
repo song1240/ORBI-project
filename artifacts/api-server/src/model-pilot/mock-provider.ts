@@ -1,17 +1,8 @@
 import { analyzeTask, predictResources, recommendModel } from "./engine";
+import type { PilotRuntimeSettings } from "./settings";
 
 const startedAt = Date.now();
 const prompt = "Refactor the authentication system and update related API tests";
-
-export interface PilotRuntimeSettings {
-  provider: string;
-  port: number;
-  contextWarning: number;
-  contextCritical: number;
-  switchThreshold: number;
-  telemetry: boolean;
-  mockMode: boolean;
-}
 
 export function getMockSnapshot(settings: PilotRuntimeSettings) {
   const elapsedSteps = Math.floor((Date.now() - startedAt) / 5_000);
