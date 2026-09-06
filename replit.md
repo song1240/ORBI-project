@@ -46,7 +46,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - Prediction confidence values are whole percentages (for example `72`), not decimal fractions.
-- Workflow-provided `PORT` and `BASE_PATH` are required to run the Vite app.
+- Replit workflows provide `PORT` and `BASE_PATH`; standalone local runs default to port 3791 and `/`.
 
 ## Pointers
 

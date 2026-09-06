@@ -1,0 +1,1 @@
+- [Replit shell environment detection](replit-shell-environment.md) — REPL_ID alone does not prove workflow-provided PORT or BASE_PATH values exist.

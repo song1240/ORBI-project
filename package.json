@@ -4,7 +4,11 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "node ./scripts/check-pnpm.mjs",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "dev:mock": "node ./scripts/run-local.mjs dev",
+    "build": "pnpm run typecheck && pnpm --filter @workspace/api-server --filter @workspace/model-pilot run build",
+    "start": "node ./scripts/run-local.mjs start",
+    "test": "pnpm -r --if-present run test",
+    "lint": "pnpm -r --if-present run lint",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "windows:install": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/install-windows.ps1",

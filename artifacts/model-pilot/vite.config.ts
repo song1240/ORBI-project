@@ -5,7 +5,8 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
-const rawPort = process.env.PORT;
+const isReplit = process.env.REPL_ID !== undefined;
+const rawPort = process.env.PORT ?? '3791';
 
 if (!rawPort) {
   throw new Error(
@@ -19,7 +20,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
+const basePath = process.env.BASE_PATH ?? '/';
 
 if (!basePath) {
   throw new Error(
@@ -31,7 +32,7 @@ const localWindowsProxy =
   process.env.LOCAL_WINDOWS === '1'
     ? {
         '/api': {
-          target: 'http://127.0.0.1:3792',
+          target: `http://127.0.0.1:${process.env.LOCAL_API_PORT ?? '3792'}`,
           changeOrigin: true,
         },
       }
@@ -46,7 +47,7 @@ export default defineConfig({
     tailwindcss(),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== 'production' &&
-    process.env.REPL_ID !== undefined
+    isReplit
       ? [
           await import('@replit/vite-plugin-cartographer').then((m) =>
             m.cartographer({

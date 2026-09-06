@@ -78,7 +78,8 @@ Invoke-Checked $Pnpm.Source @("install", "--frozen-lockfile")
 
 $RuntimeDir = Join-Path $Root ".model-pilot"
 $LogDir = Join-Path $RuntimeDir "logs"
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+$DataDir = Join-Path $RuntimeDir "data"
+New-Item -ItemType Directory -Force -Path $LogDir, $DataDir | Out-Null
 
 if (-not $SkipBuild) {
   Write-Step "Checking source"

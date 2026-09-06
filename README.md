@@ -95,6 +95,21 @@ Stop both background processes:
 
 The launcher binds both services to `127.0.0.1`, so they are not exposed to other machines on the LAN. It refuses to start when ports 3791 or 3792 are occupied. Runtime process IDs, start times, command markers, and logs are stored under `.model-pilot`, which is excluded from Git. The stop script validates this identity before terminating a process, preventing stale PID reuse from killing an unrelated application.
 
+## Commands
+
+Run these commands from the repository root:
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm run dev:mock` | Start the mock API and live-reloading dashboard on ports 3792 and 3791 |
+| `pnpm run build` | Typecheck the workspace, then build the Model Pilot API and dashboard |
+| `pnpm run start` | Start previously built API and dashboard output locally |
+| `pnpm run test` | Run tests provided by workspace packages |
+| `pnpm run lint` | Run linters provided by workspace packages |
+| `pnpm run typecheck` | Run the full TypeScript check |
+
+`pnpm run start` expects a successful build first. On Windows, `.\scripts\start-windows.ps1` is preferred because it can build missing output, opens the browser, records process identity, and provides a safe stop command.
+
 ## Replit development
 
 Use the configured workflows:
@@ -110,7 +125,7 @@ pnpm --filter @workspace/api-server run build
 pnpm --filter @workspace/model-pilot run typecheck
 ```
 
-The Vite build requires workflow or local-launcher environment variables:
+The Vite build defaults to port 3791 and `/` for standalone commands. Replit workflows and the Windows launcher override those values explicitly:
 
 ```text
 PORT=3791
@@ -154,7 +169,7 @@ Pilot Settings currently exposes:
 - telemetry;
 - Mock Mode.
 
-The Windows runtime ports are currently fixed to 3791 for the dashboard and 3792 for the API. The settings port field is reserved for the persistence/configuration follow-up.
+The Windows runtime ports are currently fixed to 3791 for the dashboard and 3792 for the API. Direct `pnpm` launches may override `DASHBOARD_PORT`, `API_PORT`, `LOCAL_API_PORT`, and `MODEL_PILOT_DATA_DIR`. The settings port field is reserved for the persistence/configuration follow-up.
 
 ## Privacy and security
 
