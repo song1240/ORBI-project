@@ -24,6 +24,7 @@ import type {
   ClaudeCodeEventAccepted,
   HealthStatus,
   LiveSnapshot,
+  PilotProviderDiscovery,
   PilotSettings,
   PilotSettingsUpdate,
   SessionHistoryItem
@@ -276,6 +277,83 @@ export function useListPilotSessions<TData = Awaited<ReturnType<typeof listPilot
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListPilotSessionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListPilotProvidersUrl = () => {
+
+
+
+
+  return `/api/pilot/providers`
+}
+
+/**
+ * @summary Detect supported local AI coding providers
+ */
+export const listPilotProviders = async ( options?: Parameters<typeof customFetch>[1]): Promise<PilotProviderDiscovery> => {
+
+  return customFetch<PilotProviderDiscovery>(getListPilotProvidersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPilotProvidersQueryKey = () => {
+    return [
+    `/api/pilot/providers`
+    ] as const;
+    }
+
+
+export const getListPilotProvidersQueryOptions = <TData = Awaited<ReturnType<typeof listPilotProviders>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPilotProviders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPilotProvidersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPilotProviders>>> = ({ signal }) => listPilotProviders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPilotProviders>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPilotProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof listPilotProviders>>>
+export type ListPilotProvidersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Detect supported local AI coding providers
+ */
+
+export function useListPilotProviders<TData = Awaited<ReturnType<typeof listPilotProviders>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPilotProviders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPilotProvidersQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

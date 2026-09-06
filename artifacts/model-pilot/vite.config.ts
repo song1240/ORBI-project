@@ -28,8 +28,11 @@ if (!basePath) {
   );
 }
 
-const localWindowsProxy =
-  process.env.LOCAL_WINDOWS === '1'
+const localDesktop =
+  process.env.MODEL_PILOT_LOCAL_DESKTOP === '1' ||
+  process.env.LOCAL_WINDOWS === '1';
+const localDesktopProxy =
+  localDesktop
     ? {
         '/api': {
           target: `http://127.0.0.1:${process.env.LOCAL_API_PORT ?? '3792'}`,
@@ -38,7 +41,7 @@ const localWindowsProxy =
       }
     : undefined;
 const serviceHost =
-  process.env.LOCAL_WINDOWS === '1' ? '127.0.0.1' : '0.0.0.0';
+  localDesktop ? '127.0.0.1' : '0.0.0.0';
 
 export default defineConfig({
   base: basePath,
@@ -82,7 +85,7 @@ export default defineConfig({
     strictPort: true,
     host: serviceHost,
     allowedHosts: true,
-    proxy: localWindowsProxy,
+    proxy: localDesktopProxy,
     fs: {
       strict: true,
     },
@@ -91,6 +94,6 @@ export default defineConfig({
     port,
     host: serviceHost,
     allowedHosts: true,
-    proxy: localWindowsProxy,
+    proxy: localDesktopProxy,
   },
 });

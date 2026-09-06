@@ -87,6 +87,62 @@ export interface SessionHistoryItem {
   unsupportedFields: string[];
 }
 
+export type PilotProviderStatusId = typeof PilotProviderStatusId[keyof typeof PilotProviderStatusId];
+
+
+export const PilotProviderStatusId = {
+  'claude-code': 'claude-code',
+  codex: 'codex',
+  gemini: 'gemini',
+} as const;
+
+export type PilotProviderStatusAuthentication = typeof PilotProviderStatusAuthentication[keyof typeof PilotProviderStatusAuthentication];
+
+
+export const PilotProviderStatusAuthentication = {
+  connected: 'connected',
+  'sign-in-required': 'sign-in-required',
+  unknown: 'unknown',
+} as const;
+
+export type PilotProviderStatusStatus = typeof PilotProviderStatusStatus[keyof typeof PilotProviderStatusStatus];
+
+
+export const PilotProviderStatusStatus = {
+  ready: 'ready',
+  installed: 'installed',
+  'not-installed': 'not-installed',
+  unavailable: 'unavailable',
+} as const;
+
+export type PilotProviderStatusDetailCode = typeof PilotProviderStatusDetailCode[keyof typeof PilotProviderStatusDetailCode];
+
+
+export const PilotProviderStatusDetailCode = {
+  'cli-not-found': 'cli-not-found',
+  ready: 'ready',
+  'installed-auth-unknown': 'installed-auth-unknown',
+  'sign-in-required': 'sign-in-required',
+  'probe-failed': 'probe-failed',
+} as const;
+
+export interface PilotProviderStatus {
+  id: PilotProviderStatusId;
+  name: string;
+  command: string;
+  installed: boolean;
+  authentication: PilotProviderStatusAuthentication;
+  status: PilotProviderStatusStatus;
+  /** @nullable */
+  version: string | null;
+  detailCode: PilotProviderStatusDetailCode;
+}
+
+export interface PilotProviderDiscovery {
+  available: boolean;
+  providers: PilotProviderStatus[];
+}
+
 export type ClaudeCodeEventSource = typeof ClaudeCodeEventSource[keyof typeof ClaudeCodeEventSource];
 
 
@@ -108,8 +164,21 @@ export interface ClaudeCodeEventAccepted {
   event: string;
 }
 
+export type PilotProviderPreference = typeof PilotProviderPreference[keyof typeof PilotProviderPreference];
+
+
+export const PilotProviderPreference = {
+  'claude-code': 'claude-code',
+  codex: 'codex',
+  gemini: 'gemini',
+  anthropic: 'anthropic',
+  openai: 'openai',
+  ollama: 'ollama',
+  local: 'local',
+} as const;
+
 export interface PilotSettings {
-  provider: string;
+  provider: PilotProviderPreference;
   port: number;
   contextWarning: number;
   contextCritical: number;
@@ -119,7 +188,7 @@ export interface PilotSettings {
 }
 
 export interface PilotSettingsUpdate {
-  provider?: string;
+  provider?: PilotProviderPreference;
   port?: number;
   contextWarning?: number;
   contextCritical?: number;

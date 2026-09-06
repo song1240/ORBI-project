@@ -131,7 +131,7 @@ The Vite build defaults to port 3791 and `/` for standalone commands. Replit wor
 ```text
 PORT=3791
 BASE_PATH=/
-LOCAL_WINDOWS=1
+MODEL_PILOT_LOCAL_DESKTOP=1
 ```
 
 Do not run the root workspace with `pnpm dev`; each service has its own managed workflow.

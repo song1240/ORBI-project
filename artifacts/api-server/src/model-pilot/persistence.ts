@@ -323,6 +323,27 @@ function parseUnsupportedFields(value: string): string[] {
   }
 }
 
+const PROVIDER_PREFERENCES = new Set<PilotRuntimeSettings["provider"]>([
+  "claude-code",
+  "codex",
+  "gemini",
+  "anthropic",
+  "openai",
+  "ollama",
+  "local",
+]);
+
+function parseProviderPreference(
+  value: string,
+  fallback: PilotRuntimeSettings["provider"],
+): PilotRuntimeSettings["provider"] {
+  if (PROVIDER_PREFERENCES.has(value as PilotRuntimeSettings["provider"])) {
+    return value as PilotRuntimeSettings["provider"];
+  }
+  logger.warn({ provider: value }, "Ignoring unsupported saved provider preference");
+  return fallback;
+}
+
 export function loadSettings(defaults: PilotRuntimeSettings): PilotRuntimeSettings {
   const connection = db();
   const row = connection.prepare(
@@ -333,7 +354,7 @@ export function loadSettings(defaults: PilotRuntimeSettings): PilotRuntimeSettin
   ).get() as SettingsRow | undefined;
   if (row) {
     return {
-      provider: row.provider,
+      provider: parseProviderPreference(row.provider, defaults.provider),
       port: row.port,
       contextWarning: row.context_warning,
       contextCritical: row.context_critical,

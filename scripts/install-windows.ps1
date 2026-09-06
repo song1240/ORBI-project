@@ -91,7 +91,7 @@ if (-not $SkipBuild) {
   Write-Step "Building dashboard"
   $env:PORT = "3791"
   $env:BASE_PATH = "/"
-  $env:LOCAL_WINDOWS = "1"
+  $env:MODEL_PILOT_LOCAL_DESKTOP = "1"
   $env:NODE_ENV = "production"
   Invoke-Checked $Pnpm.Source @("--filter", "@workspace/model-pilot", "run", "build")
 }

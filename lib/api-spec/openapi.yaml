@@ -52,6 +52,18 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SessionHistoryItem"
+  /pilot/providers:
+    get:
+      operationId: listPilotProviders
+      tags: [pilot]
+      summary: Detect supported local AI coding providers
+      responses:
+        "200":
+          description: Local provider installation and sign-in status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PilotProviderDiscovery"
   /pilot/claude-code/events:
     post:
       operationId: ingestClaudeCodeEvent
@@ -265,6 +277,40 @@ components:
           type: array
           items:
             type: string
+    PilotProviderStatus:
+      type: object
+      required: [id, name, command, installed, authentication, status, version, detailCode]
+      properties:
+        id:
+          type: string
+          enum: [claude-code, codex, gemini]
+        name:
+          type: string
+        command:
+          type: string
+        installed:
+          type: boolean
+        authentication:
+          type: string
+          enum: [connected, sign-in-required, unknown]
+        status:
+          type: string
+          enum: [ready, installed, not-installed, unavailable]
+        version:
+          type: ["string", "null"]
+        detailCode:
+          type: string
+          enum: [cli-not-found, ready, installed-auth-unknown, sign-in-required, probe-failed]
+    PilotProviderDiscovery:
+      type: object
+      required: [available, providers]
+      properties:
+        available:
+          type: boolean
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PilotProviderStatus"
     ClaudeCodeEvent:
       type: object
       required: [source, payload]
@@ -290,7 +336,7 @@ components:
       required: [provider, port, contextWarning, contextCritical, switchThreshold, telemetry, mockMode]
       properties:
         provider:
-          type: string
+          $ref: "#/components/schemas/PilotProviderPreference"
         port:
           type: integer
         contextWarning:
@@ -307,7 +353,7 @@ components:
       type: object
       properties:
         provider:
-          type: string
+          $ref: "#/components/schemas/PilotProviderPreference"
         port:
           type: integer
         contextWarning:
@@ -320,4 +366,7 @@ components:
           type: boolean
         mockMode:
           type: boolean
+    PilotProviderPreference:
+      type: string
+      enum: [claude-code, codex, gemini, anthropic, openai, ollama, local]
 

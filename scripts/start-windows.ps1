@@ -132,7 +132,7 @@ $WebProcess = $null
 try {
   Write-Host "Starting Model Pilot API on port $ApiPort..."
   $env:PORT = "$ApiPort"
-  $env:LOCAL_WINDOWS = "1"
+  $env:MODEL_PILOT_LOCAL_DESKTOP = "1"
   $env:NODE_ENV = "production"
   $env:MODEL_PILOT_DATA_DIR = $DataDir
   $ApiProcess = Start-Process -FilePath $Node.Source `
@@ -147,7 +147,7 @@ try {
   Write-Host "Starting Model Pilot dashboard on port $DashboardPort..."
   $env:PORT = "$DashboardPort"
   $env:BASE_PATH = "/"
-  $env:LOCAL_WINDOWS = "1"
+  $env:MODEL_PILOT_LOCAL_DESKTOP = "1"
   $env:NODE_ENV = "production"
   $WebProcess = Start-Process -FilePath $Node.Source `
     -ArgumentList @((Quote-ProcessArgument $ViteEntry), "preview", "--config", (Quote-ProcessArgument $ViteConfig)) `

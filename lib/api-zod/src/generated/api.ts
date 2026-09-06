@@ -96,6 +96,24 @@ export const ListPilotSessionsResponse = zod.array(ListPilotSessionsResponseItem
 
 
 /**
+ * @summary Detect supported local AI coding providers
+ */
+export const ListPilotProvidersResponse = zod.object({
+  "available": zod.boolean(),
+  "providers": zod.array(zod.object({
+  "id": zod.enum(['claude-code', 'codex', 'gemini']),
+  "name": zod.string(),
+  "command": zod.string(),
+  "installed": zod.boolean(),
+  "authentication": zod.enum(['connected', 'sign-in-required', 'unknown']),
+  "status": zod.enum(['ready', 'installed', 'not-installed', 'unavailable']),
+  "version": zod.string().nullable(),
+  "detailCode": zod.enum(['cli-not-found', 'ready', 'installed-auth-unknown', 'sign-in-required', 'probe-failed'])
+}))
+})
+
+
+/**
  * @summary Ingest a local Claude Code hook or status-line event
  */
 export const IngestClaudeCodeEventBody = zod.object({
@@ -114,7 +132,7 @@ export const IngestClaudeCodeEventResponse = zod.object({
  * @summary Get Model Pilot settings
  */
 export const GetPilotSettingsResponse = zod.object({
-  "provider": zod.string(),
+  "provider": zod.enum(['claude-code', 'codex', 'gemini', 'anthropic', 'openai', 'ollama', 'local']),
   "port": zod.number().int(),
   "contextWarning": zod.number().int(),
   "contextCritical": zod.number().int(),
@@ -128,7 +146,7 @@ export const GetPilotSettingsResponse = zod.object({
  * @summary Update Model Pilot settings
  */
 export const UpdatePilotSettingsBody = zod.object({
-  "provider": zod.string().optional(),
+  "provider": zod.enum(['claude-code', 'codex', 'gemini', 'anthropic', 'openai', 'ollama', 'local']).optional(),
   "port": zod.number().int().optional(),
   "contextWarning": zod.number().int().optional(),
   "contextCritical": zod.number().int().optional(),
@@ -138,7 +156,7 @@ export const UpdatePilotSettingsBody = zod.object({
 })
 
 export const UpdatePilotSettingsResponse = zod.object({
-  "provider": zod.string(),
+  "provider": zod.enum(['claude-code', 'codex', 'gemini', 'anthropic', 'openai', 'ollama', 'local']),
   "port": zod.number().int(),
   "contextWarning": zod.number().int(),
   "contextCritical": zod.number().int(),

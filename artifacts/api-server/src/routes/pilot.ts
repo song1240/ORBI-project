@@ -7,6 +7,7 @@ import {
   IngestClaudeCodeEventResponse,
   GetPilotLiveResponse,
   GetPilotSettingsResponse,
+  ListPilotProvidersResponse,
   ListPilotSessionsResponse,
   UpdatePilotSettingsBody,
   UpdatePilotSettingsResponse,
@@ -29,6 +30,7 @@ import {
   DEFAULT_PILOT_SETTINGS,
   type PilotRuntimeSettings,
 } from "../model-pilot/settings";
+import { listLocalProviders } from "../model-pilot/provider-discovery";
 
 const router: IRouter = Router();
 
@@ -72,6 +74,28 @@ router.get("/pilot/sessions", (_req, res) => {
   res.json(ListPilotSessionsResponse.parse(
     realSessions.length || !settings.mockMode ? realSessions : sessionHistory,
   ));
+});
+
+router.get("/pilot/providers", (req, res) => {
+  const localDesktop =
+    process.env["MODEL_PILOT_LOCAL_DESKTOP"] === "1" ||
+    process.env["LOCAL_WINDOWS"] === "1";
+  if (!localDesktop) {
+    res.json(ListPilotProvidersResponse.parse({
+      available: false,
+      providers: [],
+    }));
+    return;
+  }
+  void listLocalProviders()
+    .then((providers) => res.json(ListPilotProvidersResponse.parse({
+      available: true,
+      providers,
+    })))
+    .catch((error: unknown) => {
+      req.log.error({ err: error }, "Could not detect local AI providers");
+      res.status(500).json({ error: "Could not detect local AI providers." });
+    });
 });
 
 router.post("/pilot/claude-code/events", (req, res) => {

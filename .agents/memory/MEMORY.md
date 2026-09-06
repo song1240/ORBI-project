@@ -1,2 +1,3 @@
 - [Replit shell environment detection](replit-shell-environment.md) — REPL_ID alone does not prove workflow-provided PORT or BASE_PATH values exist.
 - [Local SQLite driver compatibility](local-sqlite-driver-compatibility.md) — keep the native SQLite driver compatible with the Windows Node 20 minimum.
+- [Local provider discovery boundary](local-provider-discovery-boundary.md) — run AI CLI probes only in loopback-bound desktop mode, never from hosted previews.

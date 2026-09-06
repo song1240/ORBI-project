@@ -15,7 +15,7 @@ const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const commonEnv = {
   ...process.env,
   BASE_PATH: "/",
-  LOCAL_WINDOWS: "1",
+  MODEL_PILOT_LOCAL_DESKTOP: "1",
   LOCAL_API_PORT: process.env.LOCAL_API_PORT ?? "3792",
 };
 const apiEnv = {

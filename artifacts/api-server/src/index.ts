@@ -15,7 +15,10 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const host = process.env["LOCAL_WINDOWS"] === "1" ? "127.0.0.1" : "0.0.0.0";
+const localDesktop =
+  process.env["MODEL_PILOT_LOCAL_DESKTOP"] === "1" ||
+  process.env["LOCAL_WINDOWS"] === "1";
+const host = localDesktop ? "127.0.0.1" : "0.0.0.0";
 
 app.listen(port, host, (err) => {
   if (err) {

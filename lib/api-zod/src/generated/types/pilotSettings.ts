@@ -5,9 +5,10 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PilotProviderPreference } from './pilotProviderPreference';
 
 export interface PilotSettings {
-  provider: string;
+  provider: PilotProviderPreference;
   port: number;
   contextWarning: number;
   contextCritical: number;
