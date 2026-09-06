@@ -27,6 +27,18 @@ if (!basePath) {
   );
 }
 
+const localWindowsProxy =
+  process.env.LOCAL_WINDOWS === '1'
+    ? {
+        '/api': {
+          target: 'http://127.0.0.1:3792',
+          changeOrigin: true,
+        },
+      }
+    : undefined;
+const serviceHost =
+  process.env.LOCAL_WINDOWS === '1' ? '127.0.0.1' : '0.0.0.0';
+
 export default defineConfig({
   base: basePath,
   plugins: [
@@ -67,15 +79,17 @@ export default defineConfig({
   server: {
     port,
     strictPort: true,
-    host: '0.0.0.0',
+    host: serviceHost,
     allowedHosts: true,
+    proxy: localWindowsProxy,
     fs: {
       strict: true,
     },
   },
   preview: {
     port,
-    host: '0.0.0.0',
+    host: serviceHost,
     allowedHosts: true,
+    proxy: localWindowsProxy,
   },
 });

@@ -3,11 +3,15 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "preinstall": "node ./scripts/check-pnpm.mjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "windows:install": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/install-windows.ps1",
+    "windows:start": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-windows.ps1",
+    "windows:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/stop-windows.ps1"
   },
+  "packageManager": "pnpm@10.26.1",
   "private": true,
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.1"
