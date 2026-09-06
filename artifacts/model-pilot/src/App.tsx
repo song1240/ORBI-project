@@ -7,6 +7,7 @@ import NotFound from '@/pages/not-found';
 import LivePage from '@/pages/live';
 import SessionsPage from '@/pages/sessions';
 import SettingsPage from '@/pages/settings';
+import { LanguageProvider } from '@/lib/i18n';
 import {
   Route,
   Switch,
@@ -55,9 +56,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
+        <LanguageProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+        </LanguageProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
